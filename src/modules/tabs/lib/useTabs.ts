@@ -308,6 +308,20 @@ export function pickTabBySpaceIndex(
   return pool[idx];
 }
 
+// Payload of the native `terax:focus-pane` event (a terax://focus link); the
+// leaf may have closed since native resolved it.
+export function focusPaneTarget(
+  tabs: Tab[],
+  payload: unknown,
+): { tabId: number; leafId: number } | null {
+  const leafId = (payload as { paneId?: unknown } | null)?.paneId;
+  if (typeof leafId !== "number" || !Number.isSafeInteger(leafId)) return null;
+  const tab = tabs.find(
+    (t) => t.kind === "terminal" && hasLeaf(t.paneTree, leafId),
+  );
+  return tab ? { tabId: tab.id, leafId } : null;
+}
+
 // Next active after close, scoped to the closing tab's space. null = last tab of
 // its space, which callers treat as "refuse to close".
 export function nextActiveInSpace(

@@ -91,6 +91,26 @@ impl PtyState {
             })
     }
 
+    /// Live terminals bound to a pane, with the tty their shell runs on.
+    #[cfg(target_os = "macos")]
+    pub fn pane_ttys(&self) -> Vec<crate::modules::focus_link::PaneTty> {
+        let sessions = self.sessions.read().unwrap();
+        sessions
+            .iter()
+            .filter(|(_, session)| !session.finished.load(Ordering::Acquire))
+            .filter_map(|(id, session)| {
+                let pane_id = session.pane_id?;
+                let tty = session.master.lock().unwrap().as_ref()?.tty_name()?;
+                Some(crate::modules::focus_link::PaneTty {
+                    pty_id: *id,
+                    pane_id,
+                    owner: session.owner.clone(),
+                    tty,
+                })
+            })
+            .collect()
+    }
+
     /// The window's page navigated away (reload, HMR): its stream token dies
     /// and its terminals stop producing output until the new page's
     /// `pty_close_all` reaps them, exactly as when their channel went away.

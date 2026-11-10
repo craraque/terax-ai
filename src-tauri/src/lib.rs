@@ -461,6 +461,12 @@ pub fn run() {
                 // defeat openFileTab's path dedupe against a CLI launch.
                 #[cfg(target_os = "macos")]
                 tauri::RunEvent::Opened { urls } => {
+                    let (links, urls): (Vec<_>, Vec<_>) = urls
+                        .into_iter()
+                        .partition(modules::focus_link::is_terax_link);
+                    for link in &links {
+                        modules::focus_link::handle(app, link);
+                    }
                     let entries = urls
                         .iter()
                         .filter_map(|u| u.to_file_path().ok())

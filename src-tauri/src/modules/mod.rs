@@ -7,6 +7,9 @@ pub mod app_menu;
 #[cfg(feature = "bench")]
 pub mod bench;
 pub mod control;
+// Only macOS registers the terax:// scheme (Info.plist); see focus_link.rs.
+#[cfg(any(target_os = "macos", test))]
+pub mod focus_link;
 pub mod fs;
 pub mod git;
 pub mod history;

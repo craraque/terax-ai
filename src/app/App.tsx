@@ -90,7 +90,7 @@ import {
   useWindowTitle,
   useWorkspaceCwd,
 } from "@/modules/tabs";
-import { DEFAULT_SPACE_ID } from "@/modules/tabs/lib/useTabs";
+import { DEFAULT_SPACE_ID, focusPaneTarget } from "@/modules/tabs/lib/useTabs";
 import {
   clearFocusedTerminal,
   disposeSession,
@@ -904,6 +904,24 @@ export default function App() {
     },
     [setActiveId, focusPane],
   );
+
+  // A terax://focus link resolved natively to the pane running a given tty.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+    (async () => {
+      const off = await listen<unknown>("terax:focus-pane", (e) => {
+        const target = focusPaneTarget(tabsRef.current, e.payload);
+        if (target) activateAgentTarget(target.tabId, target.leafId);
+      });
+      if (disposed) off();
+      else unlisten = off;
+    })();
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [activateAgentTarget]);
 
   const shortcutHandlers = useMemo<ShortcutHandlers>(
     () => ({
